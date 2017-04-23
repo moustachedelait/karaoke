@@ -1,54 +1,86 @@
-const audioUrl = 'YOUR_MP3_FILE.mp3'; // place in ./build folder
-const cdgUrl = 'YOUR_CDG_FILE.cdg'; // place in ./build folder
+import CDGPlayer from '../src/CDGPlayer';
+import * as CDGInstructions from '../src/CDGInstruction';
+
+// Put these in ./build folder
+const audioUrl = 'test.mp3';
+const cdgUrl = 'test.cdg';
 
 const app = document.getElementById('app');
-const audio = document.createElement('audio');
-const canvas = document.createElement('canvas');
-const CDGPlayer = require('./wcdg');
-const cdg = new CDGPlayer(canvas);
 
-// create <canvas> element
+// Create <canvas> element
+const canvas = document.createElement('canvas');
 canvas.width = 600;
 canvas.height = 432;
-app.appendChild(canvas);
 
-// create <audio> element
+// Create <audio> element
+const audio = document.createElement('audio');
+audio.controls = true;
 audio.src = audioUrl;
+
+// Append elements
+app.appendChild(canvas);
 app.appendChild(audio);
 
-// start graphics when audio element begins playing
-audio.addEventListener("playing", function() {
+// Create the CDG player instance
+const cdg = new CDGPlayer(canvas);
+
+// Start graphics when audio element begins playing
+audio.addEventListener('playing', () => {
+  console.log('Audio playing');
   cdg.play();
 });
 
+audio.addEventListener('pause', () => {
+  console.log('Audio pause');
+  cdg.stop();
+});
+
+audio.addEventListener('seeking', () => {
+  console.log('Audio seeking');
+  cdg.stop();
+});
+
+audio.addEventListener('seeked', () => {
+  console.log('Audio seeked');
+  cdg.reset();
+});
+
 // sync to audio element's currentTime property
-audio.addEventListener("timeupdate", function() {
+audio.addEventListener('timeupdate', () => {
   cdg.sync(audio.currentTime * 1000); // convert to ms
 });
 
-// download and decode cdg file asynchronously
-fetch(cdgUrl)
-  .then(checkStatus)
-  .then(function(response) {
-    return response.arrayBuffer();
-  }).then(function(buffer) {
+// Download and decode CDG file asynchronously
+window.fetch(cdgUrl)
+  .then((response) => {
+    if (response.status >= 200 && response.status < 300) {
+      return response;
+    }
+
+    const error = new Error(response.statusText);
+    error.response = response;
+    throw error;
+  })
+  .then(response => response.arrayBuffer())
+  .then((buffer) => {
     // convert arrayBuffer to Uint8Array to normal Array
     cdg.load(Array.from(new Uint8Array(buffer)));
 
     // load and play the audio file, which will fire
     // the "playing" event and play() our CDGraphics
     audio.play();
-  }).catch(function(error) {
-    console.log('request failed', error);
   });
 
-// helper for fetch response
-function checkStatus(response) {
-  if (response.status >= 200 && response.status < 300) {
-    return response;
-  } else {
-    var error = new Error(response.statusText)
-    error.response = response;
-    throw error;
-  }
-}
+// Expose for debugging purposes
+window.cdg = cdg;
+window.CDGInstructions = CDGInstructions;
+window.debugCLUT = () => {
+  console.log(
+    `CLUT-HI: ${new Array(8).fill('%c  ').join('')}`,
+    ...cdg.context.clut.slice(8, 16).map(color => `background-color: rgb(${color.join(',')});`),
+  );
+  console.log(
+    `CLUT-LO: ${new Array(8).fill('%c  ').join('')}`,
+    ...cdg.context.clut.slice(0, 8).map(color => `background-color: rgb(${color.join(',')});`),
+  );
+};

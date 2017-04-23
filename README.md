@@ -1,24 +1,37 @@
-Javascript/HTML5 Karaoke (CD+G) Player
-======================================
+JavaScript CD+G Player
+======================
 
-This is a [CD Graphics (CD+G)](https://en.wikipedia.org/wiki/CD%2BG) implementation in Javascript that draws to an HTML5 canvas. It's based on the [player by Luke Tucker](https://github.com/ltucker/html5_karaoke) with a few key differences:
+This is a [CD Graphics (CD+G)](https://en.wikipedia.org/wiki/CD%2BG) implementation that draws to an HTML5 canvas. It's based on the [Brandon Jones's fork](https://github.com/bhj/html5_karaoke) of the [player by Luke Tucker](https://github.com/ltucker/html5_karaoke).
 
-* Uses [requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame) instead of a fixed timer for rendering
-* Has a `sync` method that can be used in conjunction with an audio element's [timeupdate](https://developer.mozilla.org/en-US/docs/Web/Events/timeupdate) event and [currentTime](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/currentTime) property to synchronize graphics to audio (see the demo)
-* No jQuery dependencies
+There are two main pieces that make this thing work:
+
+* `CDGPlayer` library that decodes CD+G files draws the instructions to an HTML5 canvas
+* Demo app that creates a `CDGPlayer` instance and an `<audio>` tag and keeps them synced
+
+Implementation Notes
+--------------------
+
+* Drawing uses [requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame) instead of a fixed timer. When syncing with the audio, it will process as many instructions as necessary based on the time since the last frame was drawn.
+* The player maintains its own `Canvas` and draws some `imageData` to it rather than using `fillRect` for each pixel. As it turns out, this made drawing really fast!
+* As a result of the change above, scaled display requires copying the player's canvas to another canvas. Well, maybe it's not totally required, but that's how it's working right now.
+
+Future Improvements
+-------------------
+
+* Isomorphic rendering. There is still a teeny bit of refactoring necessary to allow `CDGContext` to create a non-`HTMLCanvasElement` canvas in a node.js environment, but it's already pretty close, I think.
+* CD+G authoring utils, like converting images to instructions, instruction timelines, etc.
 
 Running the Demo
 ----------------
-1. Place your audio file and cdg file in the `build` folder alongside `index.html` (this folder will be served by [webpack-dev-server](https://webpack.github.io/docs/webpack-dev-server.html))
-2. Update lines 1 and 2 of `app/index.js` with those filenames
-3. `npm install`
-4. `npm start`
-5. Open `http://localhost:8080/webpack-dev-server/` in a browser and you should see/hear things!
 
-Note: This demo relies on the [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) to download and decode the CD+G data stream to a 'normal' array usable by the player. Fetch is currently included as a polyfill via Webpack to achieve this until the browsers catch up.
+1. `yarn install` / `npm install`
+1. Add `test.mp3` and `test.cdg` to the `build` folder alongside `index.html`
+3. Run `yarn start` / `npm start`
+4. Open `http://localhost:8080/` in your browser!
 
 Resources
 ---------
+
 * [Jim Bumgardner's CD+G Revealed](http://jbum.com/cdg_revealed.html) document/specification
 
 License
