@@ -13,21 +13,39 @@ import {
 export default class CDGContext {
   /**
    * Horizontal offset
-   * @type {Number}
+   * @type {number}
    */
   hOffset = 0;
 
   /**
    * Vertical offset
-   * @type {Number}
+   * @type {number}
    */
   vOffset = 0;
 
   /**
    * Transparent index in the color lookup table
-   * @type {Number}
+   * @type {number}
    */
   keyColor = null;
+
+  /**
+   * Background index in the color lookup table
+   * @type {number}
+   */
+  backgroundContainer = null;
+
+  /**
+   * Last index in the color lookup table that was used as a border preset
+   * @type {number}
+   */
+  borderColor = null;
+
+  /**
+   * Last index in the color lookup table that was used as a memory preset
+   * @type {number}
+   */
+  memoryColor = null;
 
   /**
    * Color lookup table
@@ -51,21 +69,65 @@ export default class CDGContext {
    * Creates a CDG rendering context
    *
    * @constructor
+   * @param  {Object} [options] - context options
+   * @param  {number} [options.width] - width of the canvas
+   * @param  {number} [options.height] - height of the canvas
+   * @param  {HTMLCanvasElement} [options.canvas] - canvas element
+   * @param  {CanvasRenderingContext2D} [options.ctx] - canvas rendering context
+   * @param  {ImageData} [options.imageData] - pixel data
    */
-  constructor() {
+  constructor({
+    width = WIDTH,
+    height = HEIGHT,
+    canvas = this.createCanvas(width, height),
+    ctx = this.createCanvasContext(canvas),
+    imageData = this.createImageData(canvas, ctx, width, height),
+  } = {}) {
+    this.canvas = canvas;
+    this.ctx = ctx;
+    this.imageData = imageData;
+  }
+
+  /**
+   * Creates a canvas at the given size
+   *
+   * @param  {number} width - width of the canvas
+   * @param  {number} height - height of the canvas
+   * @return {HTMLCanvasElement} created canvas
+   */
+  createCanvas(width, height) {
     const canvas = document.createElement('canvas');
-    canvas.width = WIDTH;
-    canvas.height = HEIGHT;
+    canvas.width = width;
+    canvas.height = height;
+    return canvas;
+  }
+
+  /**
+   * Creates a new 2D context for a canvas
+   *
+   * @param  {HTMLCanvasElement} canvas - canvas element
+   * @return {CanvasRenderingContext2D} created context
+   */
+  createCanvasContext(canvas) {
     const ctx = canvas.getContext('2d');
     ctx.mozImageSmoothingEnabled = false;
     ctx.webkitImageSmoothingEnabled = false;
     ctx.msImageSmoothingEnabled = false;
     ctx.imageSmoothingEnabled = false;
-    const imageData = ctx.createImageData(WIDTH, HEIGHT);
+    return ctx;
+  }
 
-    this.canvas = canvas;
-    this.ctx = ctx;
-    this.imageData = imageData;
+  /**
+   * Creates image data to dump the pixel data for canvas rendering
+   *
+   * @param  {HTMLCanvasElement} canvas - canvas element
+   * @param  {CanvasRenderingContext2D} ctx - 2D canvas rendering context
+   * @param  {number} width - width of the canvas
+   * @param  {number} height - height of the canvas
+   * @return {ImageData} created image data
+   */
+  createImageData(canvas, ctx, width = canvas.width, height = canvas.height) {
+    return ctx.createImageData(width, height);
   }
 
   /**
@@ -75,15 +137,19 @@ export default class CDGContext {
     this.hOffset = 0;
     this.vOffset = 0;
     this.keyColor = null;
+    this.backgroundColor = null;
+    this.borderColor = null;
+    this.memoryColor = null;
+    this.pixels.fill(0);
   }
 
   /**
    * Sets an entry in the color lookup table
    *
    * @param  {Number} index - index in the palette
-   * @param  {Number} r - red component of the color
-   * @param  {Number} g - green component of the color
-   * @param  {Number} b - blue component of the color
+   * @param  {number} r - red component of the color
+   * @param  {number} g - green component of the color
+   * @param  {number} b - blue component of the color
    */
   setCLUTEntry(index, r, g, b) {
     this.clut[index] = [r, g, b].map(c => c * 17);
@@ -109,6 +175,26 @@ export default class CDGContext {
    */
   getPixel(x, y) {
     return this.pixels[x + (y * WIDTH)];
+  }
+
+  /**
+   * Gets the background color index from the CLUT based on the transparent or background color
+   *
+   * @return {number} CLUT index
+   */
+  getBackground() {
+    switch (true) {
+      case this.keyColor != null:
+        return this.keyColor;
+      case this.backgroundColor != null:
+        return this.backgroundColor;
+      case this.memoryColor != null:
+        return this.memoryColor;
+      case this.borderColor != null:
+        return this.borderColor;
+      default:
+        return 0;
+    }
   }
 
   /**

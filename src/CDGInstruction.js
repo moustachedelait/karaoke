@@ -48,7 +48,17 @@ export class CDGInstruction {
   constructor(bytes, offset = 0) {
     this.bytes = bytes.slice(offset, offset + PACKET_SIZE);
   }
+
   execute(context) {}
+
+  bytecodeToString() {
+    return this.bytes.map(byte => byte.toString(16).padStart(2, '0')).join('');
+  }
+
+  detailsToString() {
+    return '';
+  }
+
   toString() {
     return this.instruction;
   }
@@ -83,7 +93,13 @@ export class CDGMemoryPresetInstruction extends CDGInstruction {
   }
 
   execute(context) {
+    context.memoryColor = this.color;
+    context.backgroundColor = this.color;
     context.pixels.fill(this.color);
+  }
+
+  detailsToString() {
+    return `color index: ${this.color}`;
   }
 }
 
@@ -103,6 +119,8 @@ export class CDGBorderPresetInstruction extends CDGInstruction {
   }
 
   execute(context) {
+    context.borderColor = this.color;
+    context.backgroundColor = this.color;
     const [left, top, right, bottom] = DISPLAY_BOUNDS;
     for (let x = 0; x < WIDTH; x++) {
       for (let y = 0; y < top; y++) {
@@ -120,6 +138,10 @@ export class CDGBorderPresetInstruction extends CDGInstruction {
         context.setPixel(x, y, this.color);
       }
     }
+  }
+
+  detailsToString() {
+    return `color index: ${this.color}`;
   }
 }
 
@@ -141,7 +163,6 @@ export class CDGTileBlockInstruction extends CDGInstruction {
     this.row = bytes[doff + 2] & 0x1F;
     this.column = bytes[doff + 3] & 0x3F;
     this.pixels = bytes.slice(doff + 4, doff + 16);
-    this._offset = offset;
   }
 
   execute(context) {
@@ -158,7 +179,7 @@ export class CDGTileBlockInstruction extends CDGInstruction {
     for (let i = 0; i < TILE_HEIGHT; i++) {
       const curbyte = this.pixels[i];
       for (let j = 0; j < TILE_WIDTH; j++) {
-        const color = this.colors[((curbyte >> (5 - j)) & 0x1)];
+        const color = this.colors[((curbyte >> (5 - j)) & 0x01)];
         this.op(context, x + j, y + i, color);
       }
     }
@@ -168,8 +189,8 @@ export class CDGTileBlockInstruction extends CDGInstruction {
     context.setPixel(x, y, color);
   }
 
-  toString() {
-    return `${this.instruction}(${this.row}, ${this.column}) @${this._offset}`;
+  detailsToString() {
+    return `row: ${this.row}, column: ${this.column}, color indexes: [${this.colors.join(', ')}]`;
   }
 }
 
@@ -214,6 +235,7 @@ export class CDGScrollPresetInstruction extends CDGInstruction {
   }
 
   execute(context) {
+    context.backgroundColor = this.color;
     context.hOffset = Math.min(this.hOffset, TILE_WIDTH - 1);
     context.vOffset = Math.min(this.vOffset, TILE_HEIGHT - 1);
 
@@ -263,6 +285,27 @@ export class CDGScrollPresetInstruction extends CDGInstruction {
     }
     return this.color;
   }
+
+  detailsToString() {
+    let vScroll = false;
+    let hScroll = false;
+    if (this.vCmd === CDG_SCROLL_UP) {
+      vScroll = 'up';
+    } else if (this.vCmd === CDG_SCROLL_DOWN) {
+      vScroll = 'down';
+    }
+    if (this.vCmd === CDG_SCROLL_LEFT) {
+      hScroll = 'left';
+    } else if (this.vCmd === CDG_SCROLL_RIGHT) {
+      hScroll = 'right';
+    }
+    return [
+      vScroll,
+      hScroll,
+      `vOffset: ${this.vOffset}`,
+      `hOffset: ${this.hOffset}`,
+    ].filter(v => v).join(' ');
+  }
 }
 
 /**
@@ -294,11 +337,15 @@ export class CDGSetKeyColorInstruction extends CDGInstruction {
 
   constructor(bytes, offset = 0) {
     super(bytes, offset);
-    this.index = bytes[offset + CDG_DATA] & 0x0F;
+    this.color = bytes[offset + CDG_DATA] & 0x0F;
   }
 
   execute(context) {
-    context.keyColor = this.index;
+    context.keyColor = this.color;
+  }
+
+  detailsToString() {
+    return `color index: ${this.color}`;
   }
 }
 
@@ -337,6 +384,14 @@ export class CDGLoadCLUTLowInstruction extends CDGInstruction {
         this.colors[i][1],
         this.colors[i][2]);
     }
+  }
+
+  detailsToString() {
+    return `colors: [${
+      this.colors
+        .map((color, i) => `${i + this.clutOffset}: #${color.map(c => c.toString(16)).join('')}`)
+        .join(', ')
+    }]`;
   }
 }
 

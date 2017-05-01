@@ -39,7 +39,7 @@ function cancelFrame(id) {
  * CDG Player
  * ==========
  *
- * Plays some motherfucking karaoke
+ * Provides an interface for interpreting CDG instructions and rendering the results to a canvas
  */
 export default class CDGPlayer {
   /**
@@ -119,24 +119,27 @@ export default class CDGPlayer {
    * Creates CDGPlayer instance
    *
    * @constructor
-   * @param {HTMLCanvasElement} [targetCanvas] - optional canvas to copy the context canvas onto
+   * @param  {Object} [options] - CDG player options
+   * @param  {Object} [options.contextOptions] - options for the CDG context
+   * @param  {function} [options.afterRender] - function to call after rendering a frame
    */
-  constructor(targetCanvas) {
-    this.context = new CDGContext();
-    if (targetCanvas) {
-      const ctx = targetCanvas.getContext('2d');
-      ctx.mozImageSmoothingEnabled = false;
-      ctx.webkitImageSmoothingEnabled = false;
-      ctx.msImageSmoothingEnabled = false;
-      ctx.imageSmoothingEnabled = false;
-      this.copyCanvas = (canvas) => {
-        ctx.drawImage(
-          canvas,
-          0, 0, canvas.width, canvas.height,
-          0, 0, targetCanvas.width, targetCanvas.height,
-        );
-      };
-    }
+  constructor({
+    contextOptions = {},
+    context = this.createContext(contextOptions),
+    afterRender,
+  } = {}) {
+    this.context = context;
+    this.afterRender = afterRender;
+  }
+
+  /**
+   * Creates a CDG context instance for rendering
+   *
+   * @param  {Object} [options] - parameters passed to the context constructor
+   * @return {CDGContext} context instance
+   */
+  createContext(options = {}) {
+    return new CDGContext(options);
   }
 
   /**
@@ -171,7 +174,7 @@ export default class CDGPlayer {
    */
   render() {
     this.context.renderFrame();
-    this.copyCanvas && this.copyCanvas(this.context.canvas);
+    this.afterRender && this.afterRender(this.context);
     return this;
   }
 
