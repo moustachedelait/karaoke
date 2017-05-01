@@ -1,6 +1,6 @@
 {
   "name": "karaoke",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "CD+G Player",
   "main": "lib/index.js",
   "jsnext:main": "src/CDGKaraokePlayer.js",
