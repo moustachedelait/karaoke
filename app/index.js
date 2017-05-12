@@ -6,21 +6,79 @@ const audioUrl = 'test.mp3';
 const cdgUrl = 'test.cdg';
 
 const app = document.getElementById('app');
+const wrap = document.getElementById('wrap');
 
 // Creates the CDGKaraokePlayer instance
 const karaoke = new CDGKaraokePlayer({
-  backgroundContainer: document.body,
+  backgroundContainer: app,
 });
 
 // Show audio controls
 karaoke.audio.controls = true;
 
 // Append elements
-app.appendChild(karaoke.canvas);
-app.appendChild(karaoke.audio);
+wrap.appendChild(karaoke.canvas);
+wrap.appendChild(karaoke.audio);
 
 // Load the audio and graphics, then begin playback
 karaoke.loadAndPlay(audioUrl, cdgUrl);
+
+// Fullscreen support
+const fullscreenEl = document.body;
+
+function isFullscreen() {
+  if ('fullscreen' in document) {
+    return document.fullscreen;
+  } else if ('webkitIsFullScreen' in document) {
+    return document.webkitIsFullScreen;
+  } else if ('ozFullScreen' in document) {
+    return document.ozFullScreen;
+  }
+  return false;
+}
+
+function enterFullscreen() {
+  if (fullscreenEl.requestFullscreen) {
+    fullscreenEl.requestFullscreen();
+  } else if (fullscreenEl.mozRequestFullScreen) {
+    fullscreenEl.mozRequestFullScreen();
+  } else if (fullscreenEl.webkitRequestFullscreen) {
+    fullscreenEl.webkitRequestFullscreen();
+  } else if (fullscreenEl.msRequestFullscreen) {
+    fullscreenEl.msRequestFullscreen();
+  }
+}
+
+function exitFullscreen() {
+  if (document.exitFullscreen) {
+    document.exitFullscreen();
+  } else if (document.webkitExitFullscreen) {
+    document.webkitExitFullscreen();
+  } else if (document.mozCancelFullScreen) {
+    document.mozCancelFullScreen();
+  }
+}
+
+function toggleFullscreenClass() {
+  if (isFullscreen()) {
+    app.classList.add('fullscreen');
+  } else {
+    app.classList.remove('fullscreen');
+  }
+}
+
+karaoke.canvas.addEventListener('click', () => {
+  if (isFullscreen()) {
+    exitFullscreen();
+  } else {
+    enterFullscreen();
+  }
+});
+
+document.addEventListener('fullscreenchange', toggleFullscreenClass);
+document.addEventListener('webkitfullscreenchange', toggleFullscreenClass);
+document.addEventListener('mozfullscreenchange', toggleFullscreenClass);
+document.addEventListener('MSFullscreenChange', toggleFullscreenClass);
 
 // Expose for debugging purposes
 window.cdgKaraoke = karaoke;

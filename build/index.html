@@ -12,27 +12,55 @@
             padding: 0;
         }
         body {
-            display: flex;
-            align-items: center;
-            justify-content: center;
             background-color: #000000;
             color: #ffffff;
         }
-        #app  {
+        #app {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+        #wrap  {
             max-width: 600px;
         }
-        #app canvas {
+        #wrap canvas {
             image-rendering: pixelated;
+            cursor: zoom-in;
         }
-        #app canvas,
-        #app audio {
+        #wrap canvas,
+        #wrap audio {
             display: block;
             width: 100%;
+        }
+        #app.fullscreen {
+            cursor: none;
+        }
+        #app.fullscreen #wrap {
+            width: 139vmin;
+            max-width: none;
+        }
+        #app.fullscreen canvas {
+            cursor: none;
+        }
+        #app.fullscreen audio {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            opacity: 0;
+            cursor: initial;
+        }
+        #app.fullscreen audio:hover {
+            opacity: 1;
         }
     </style>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <div id="wrap"></div>
+    </div>
     <script src="bundle.js"></script>
   </body>
 </html>
