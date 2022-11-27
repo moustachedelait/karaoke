@@ -122,14 +122,17 @@ export default class CDGPlayer {
    * @param  {Object} [options] - CDG player options
    * @param  {Object} [options.contextOptions] - options for the CDG context
    * @param  {function} [options.afterRender] - function to call after rendering a frame
+   * @param  {function} [options.afterSongEnded] - function to call ater the song ended
    */
   constructor({
     contextOptions = {},
     context = this.createContext(contextOptions),
     afterRender,
+    afterSongEnded,
   } = {}) {
     this.context = context;
     this.afterRender = afterRender;
+    this.afterSongEnded = afterSongEnded;
   }
 
   /**
@@ -240,6 +243,11 @@ export default class CDGPlayer {
    * @return {self}
    */
   stop() {
+    // TODO: dirty, this class has to know about the id of the audio element
+    if (document.getElementById("audio").ended) {
+      this.afterSongEnded && this.afterSongEnded(this.context);
+    }
+
     cancelFrame(this.frameId);
     this.frameId = null;
     this.lastSyncPos = null;

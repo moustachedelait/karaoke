@@ -33,6 +33,7 @@ export default class CDGKaraokePlayer {
     width = 2 * WIDTH,
     height = 2 * HEIGHT,
     backgroundContainer,
+    onSongEnd,
     canvas = this.createDisplayCanvas(width, height),
     ctx = this.createCanvasContext(canvas),
     audio = this.createAudio(),
@@ -46,10 +47,12 @@ export default class CDGKaraokePlayer {
     this.canvas = canvas;
     this.ctx = ctx;
     this.audio = audio;
+    this.onSongEnd = onSongEnd;
 
     // Create the CDGPlayer instance
     this.player = new CDGPlayer({
       afterRender: this.afterRender,
+      afterSongEnded: this.afterSongEnded,
       ...playerOptions,
     });
 
@@ -134,6 +137,17 @@ export default class CDGKaraokePlayer {
   afterRender = (context) => {
     this.setContainerBackgroundColor(context);
     this.copyContextToCanvas(context);
+  };
+
+  /**
+   * Gets fired when a song ends
+   *
+   * @param  {CDGContext} context - CDG rendering context
+   */
+  afterSongEnded = (context) => {
+    if (this.onSongEnd) {
+      this.onSongEnd(context);
+    }
   };
 
   /**
