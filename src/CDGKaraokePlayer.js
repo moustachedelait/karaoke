@@ -1,9 +1,6 @@
-import {
-  WIDTH,
-  HEIGHT,
-} from './constants';
+import { WIDTH, HEIGHT } from "./constants";
 
-import CDGPlayer from './CDGPlayer';
+import CDGPlayer from "./CDGPlayer";
 
 /**
  * CDG Karoake Player
@@ -73,7 +70,7 @@ export default class CDGKaraokePlayer {
    * @return {HTMLCanvasElement} display canvas
    */
   createDisplayCanvas(width, height) {
-    const canvas = document.createElement('canvas');
+    const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
     return canvas;
@@ -86,7 +83,7 @@ export default class CDGKaraokePlayer {
    * @return {CanvasRenderingContext2D} created context
    */
   createCanvasContext(canvas) {
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     ctx.mozImageSmoothingEnabled = false;
     ctx.webkitImageSmoothingEnabled = false;
     ctx.msImageSmoothingEnabled = false;
@@ -100,31 +97,31 @@ export default class CDGKaraokePlayer {
    * @return {HTMLAudioElement} audio player element
    */
   createAudio() {
-    return document.createElement('audio');
+    return document.createElement("audio");
   }
 
   /**
    * Adds event listeners to the audio element, which in turn controls the CDG playback
    */
   addAudioListeners() {
-    this.audio.addEventListener('playing', () => {
+    this.audio.addEventListener("playing", () => {
       this.player.play();
     });
 
-    this.audio.addEventListener('pause', () => {
+    this.audio.addEventListener("pause", () => {
       this.player.stop();
     });
 
-    this.audio.addEventListener('seeking', () => {
+    this.audio.addEventListener("seeking", () => {
       this.player.stop();
     });
 
-    this.audio.addEventListener('seeked', () => {
+    this.audio.addEventListener("seeked", () => {
       this.player.reset();
     });
 
     // sync to audio element's currentTime property
-    this.audio.addEventListener('timeupdate', () => {
+    this.audio.addEventListener("timeupdate", () => {
       this.player.sync(this.audio.currentTime * 1000); // convert to ms
     });
   }
@@ -155,7 +152,7 @@ export default class CDGKaraokePlayer {
    */
   setContainerBackgroundColor(context) {
     if (this.backgroundContainer) {
-      const rgb = context.clut[context.getBackground()].join(',');
+      const rgb = context.clut[context.getBackground()].join(",");
       this.backgroundContainer.style.backgroundColor = `rgb(${rgb})`;
     }
   }
@@ -173,8 +170,14 @@ export default class CDGKaraokePlayer {
     // Copy from source canvas to the target canvas
     this.ctx.drawImage(
       context.canvas,
-      0, 0, context.canvas.width, context.canvas.height,
-      0, 0, this.canvas.width, this.canvas.height,
+      0,
+      0,
+      context.canvas.width,
+      context.canvas.height,
+      0,
+      0,
+      this.canvas.width,
+      this.canvas.height
     );
   }
 
@@ -200,10 +203,7 @@ export default class CDGKaraokePlayer {
    * @return {Promise} that resolves when everything is loaded and ready to play
    */
   load(audioUrl, cdgUrl) {
-    return Promise.all([
-      this.loadAudioSrc(audioUrl),
-      this.loadCdgData(cdgUrl),
-    ]);
+    return Promise.all([this.loadAudioSrc(audioUrl), this.loadCdgData(cdgUrl)]);
   }
 
   /**
@@ -214,10 +214,9 @@ export default class CDGKaraokePlayer {
    * @return {Promise} that resolves when everything is loaded and ready to play
    */
   loadAndPlay(audioUrl, cdgUrl) {
-    return this.load(audioUrl, cdgUrl)
-      .then(() => {
-        this.play();
-      });
+    return this.load(audioUrl, cdgUrl).then(() => {
+      this.play();
+    });
   }
 
   /**
@@ -238,12 +237,12 @@ export default class CDGKaraokePlayer {
         reject();
       };
       removeListeners = () => {
-        this.audio.removeEventListener('canplaythrough', onCanPlay);
-        this.audio.removeEventListener('error', onError);
+        this.audio.removeEventListener("canplaythrough", onCanPlay);
+        this.audio.removeEventListener("error", onError);
       };
 
-      this.audio.addEventListener('canplaythrough', onCanPlay);
-      this.audio.addEventListener('error', onError);
+      this.audio.addEventListener("canplaythrough", onCanPlay);
+      this.audio.addEventListener("error", onError);
 
       this.audio.src = audioUrl;
     });
@@ -266,7 +265,7 @@ export default class CDGKaraokePlayer {
         error.response = response;
         throw error;
       })
-      .then(response => response.arrayBuffer())
+      .then((response) => response.arrayBuffer())
       .then((buffer) => {
         // convert arrayBuffer to Uint8Array to normal Array
         this.player.load(Array.from(new Uint8Array(buffer)));

@@ -1,10 +1,7 @@
-import {
-  PACKETS_PER_SECTOR,
-  SECTORS_PER_SECOND,
-} from './constants';
+import { PACKETS_PER_SECTOR, SECTORS_PER_SECOND } from "./constants";
 
-import CDGContext from './CDGContext';
-import CDGParser from './CDGParser';
+import CDGContext from "./CDGContext";
+import CDGParser from "./CDGParser";
 
 /**
  * Calculates current time for the sake of determining playback intervals
@@ -12,24 +9,30 @@ import CDGParser from './CDGParser';
  * @return {number} milliseconds
  */
 function now() {
-  if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
+  if (
+    typeof performance !== "undefined" &&
+    typeof performance.now === "function"
+  ) {
     return performance.now();
-  } else if (typeof process !== 'undefined' && typeof process.hrtime === 'function') {
+  } else if (
+    typeof process !== "undefined" &&
+    typeof process.hrtime === "function"
+  ) {
     const [seconds, microseconds] = process.hrtime();
-    return (seconds * 1000) + (microseconds / 1000000);
+    return seconds * 1000 + microseconds / 1000000;
   }
   return Date.now();
 }
 
 function requestFrame(callback) {
-  if (typeof requestAnimationFrame === 'function') {
+  if (typeof requestAnimationFrame === "function") {
     return window.requestAnimationFrame(callback);
   }
   return setTimeout(callback, 25);
 }
 
 function cancelFrame(id) {
-  if (typeof cancelAnimationFrame === 'function') {
+  if (typeof cancelAnimationFrame === "function") {
     return cancelAnimationFrame(id);
   }
   return clearTimeout(id);
@@ -104,7 +107,9 @@ export default class CDGPlayer {
 
     // determine packet we should be at, based on spec
     // of 4 packets per sector @ 75 sectors per second
-    const newPc = Math.floor(SECTORS_PER_SECOND * PACKETS_PER_SECTOR * (this.pos / 1000));
+    const newPc = Math.floor(
+      SECTORS_PER_SECOND * PACKETS_PER_SECTOR * (this.pos / 1000)
+    );
 
     const ffAmt = newPc - this.pc;
     if (ffAmt > 0) {
@@ -188,7 +193,7 @@ export default class CDGPlayer {
    * @return {self}
    */
   executeInstruction(instruction) {
-    if (instruction && typeof instruction.execute === 'function') {
+    if (instruction && typeof instruction.execute === "function") {
       instruction.execute(this.context);
     }
     return this;
